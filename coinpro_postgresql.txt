@@ -1,0 +1,4 @@
+IP: 91.225.104.133
+Database: coinpro
+User: coinpro
+Password: xgG0g9UHp5dY

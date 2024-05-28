@@ -4,6 +4,7 @@ import 'package:nb_utils/nb_utils.dart';
 import 'package:coinpro_prokit/screen/CPDashBoardScreen.dart';
 import 'package:coinpro_prokit/screen/CPSignUpScreen.dart';
 import 'package:coinpro_prokit/utils/CPColors.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 class CPLoginScreen extends StatefulWidget {
   @override
@@ -32,6 +33,26 @@ class CPLoginScreenState extends State<CPLoginScreen> {
   @override
   void setState(fn) {
     if (mounted) super.setState(fn);
+  }
+
+  Future<void> signIn() async {
+    final response = await Supabase.instance.client.auth.signIn(
+      email: emailController.text,
+      password: passController.text,
+    );
+
+    if (response.error != null) {
+      // Hata mesajını göster
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(response.error!.message)),
+      );
+    } else {
+      // Başarılı giriş sonrası kullanıcıyı ana sayfaya yönlendir
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Giriş başarılı!')),
+      );
+      CPDashBoardScreen().launch(context);
+    }
   }
 
   @override
@@ -197,9 +218,7 @@ class CPLoginScreenState extends State<CPLoginScreen> {
                   ),
                   SizedBox(height: 16),
                   MaterialButton(
-                    onPressed: () {
-                      CPDashBoardScreen().launch(context);
-                    },
+                    onPressed: signIn, // Giriş işlemi için signIn fonksiyonunu çağır
                     color: Color(0xff2972ff),
                     elevation: 0,
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16.0)),

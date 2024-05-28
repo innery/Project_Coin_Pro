@@ -8,6 +8,8 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
+  supabase: ^0.2.9
+  supabase_flutter: ^0.2.9
 
   # Base
   cupertino_icons: ^1.0.6

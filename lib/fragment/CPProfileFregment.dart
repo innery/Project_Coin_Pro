@@ -2,11 +2,13 @@ import 'package:coinpro_prokit/fragment/CPNotificationFragment.dart';
 import 'package:coinpro_prokit/main.dart';
 import 'package:coinpro_prokit/model/CPModel.dart';
 import 'package:coinpro_prokit/screen/CPEditProfileScreen.dart';
+import 'package:coinpro_prokit/screen/CPLoginScreen.dart';
 import 'package:coinpro_prokit/utils/CPColors.dart';
 import 'package:coinpro_prokit/utils/CPDataProvider.dart';
 import 'package:coinpro_prokit/utils/CPImages.dart';
 import 'package:flutter/material.dart';
 import 'package:nb_utils/nb_utils.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 class CPProfileFragment extends StatefulWidget {
@@ -17,6 +19,7 @@ class CPProfileFragment extends StatefulWidget {
 class CPProfileFragmentState extends State<CPProfileFragment> {
   List<CPDataModel> profileList = getProfileDataModel();
   String? nameProfile;
+  String? currentUserName;
 
   @override
   void initState() {
@@ -25,7 +28,28 @@ class CPProfileFragmentState extends State<CPProfileFragment> {
   }
 
   Future<void> init() async {
-    //
+    await fetchUserProfile();
+  }
+
+  Future<void> fetchUserProfile() async {
+    final user = Supabase.instance.client.auth.currentUser;
+    if (user != null && user.email != null) {
+      final response = await Supabase.instance.client
+          .from('profileusers')
+          .select()
+          .eq('email', user.email!)
+          .single();
+
+      if (response != null) {
+        setState(() {
+          currentUserName = response['username'] ?? 'User';
+        });
+      } else {
+        toast('Profile data not found.');
+      }
+    } else {
+      toast('User not logged in');
+    }
   }
 
   @override
@@ -75,7 +99,7 @@ class CPProfileFragmentState extends State<CPProfileFragment> {
                       ),
                       SizedBox(height: 8),
                       Text(
-                        nameProfile.validate().isEmpty ? "Jelly Grande" : '$nameProfile',
+                        currentUserName ?? "Loading...",
                         textAlign: TextAlign.start,
                         overflow: TextOverflow.clip,
                         style: boldTextStyle(size: 18),
@@ -168,7 +192,7 @@ class CPProfileFragmentState extends State<CPProfileFragment> {
                             ),
                           );
                           nameProfile = name;
-                          setState(() {});
+                          await fetchUserProfile(); // Update the user profile after editing
                         } else if (index == 1) {
                           CPNotificationFragment(isNotification: true).launch(context);
                         } else if (index == 2) {
@@ -228,7 +252,6 @@ class CPProfileFragmentState extends State<CPProfileFragment> {
                   );
                 },
                 child: Container(
-                  // alignment: Alignment.center,
                   margin: EdgeInsets.symmetric(vertical: 16, horizontal: 0),
                   padding: EdgeInsets.only(left: 16),
                   width: 150,
@@ -258,6 +281,70 @@ class CPProfileFragmentState extends State<CPProfileFragment> {
                             fontWeight: FontWeight.w700,
                             fontStyle: FontStyle.normal,
                             fontSize: 16,
+                            color: Color(0xff3a57e8),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+            Align(
+              alignment: Alignment.centerLeft,
+              child: InkWell(
+                splashColor: Colors.transparent,
+                focusColor: Colors.transparent,
+                highlightColor: Colors.transparent,
+                onTap: () {
+                  showConfirmDialogCustom(
+                    context,
+                    title: 'Do you want to delete your account?',
+                    onAccept: (v) async {
+                      final user = Supabase.instance.client.auth.currentUser;
+                      if (user != null && user.email != null) {
+                      await Supabase.instance.client
+                      .from('profileusers')
+                      .delete()
+                      .eq('email', user.email!);
+                      toast("Account deleted successfully");
+                      Navigator.of(context).pushReplacement(MaterialPageRoute(builder: (context) => CPLoginScreen()));
+                      } else {
+                      toast("User not logged in");
+                      }
+                    },
+                  );
+                },
+                child: Container(
+                  margin: EdgeInsets.symmetric(vertical: 16, horizontal: 0),
+                  padding: EdgeInsets.only(left: 16),
+                  width: 150,
+                  height: 50,
+                  decoration: BoxDecoration(
+                    color: Color(0x273a57e8),
+                    shape: BoxShape.rectangle,
+                    borderRadius: BorderRadius.only(
+                      topRight: Radius.circular(24.0),
+                      bottomRight: Radius.circular(24.0),
+                    ),
+                    border: Border.all(color: Color(0x00ffffff), width: 1),
+                  ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.start,
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(Icons.delete, color: Color(0xff3a57e8), size: 24),
+                      Padding(
+                        padding: EdgeInsets.fromLTRB(16, 0, 0, 0),
+                        child: Text(
+                          "Delete User",
+                          textAlign: TextAlign.start,
+                          overflow: TextOverflow.clip,
+                          style: TextStyle(
+                            fontWeight: FontWeight.w700,
+                            fontStyle: FontStyle.normal,
+                            fontSize: 14,
                             color: Color(0xff3a57e8),
                           ),
                         ),

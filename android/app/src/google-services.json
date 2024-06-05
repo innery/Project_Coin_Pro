@@ -1,0 +1,38 @@
+{
+  "project_info": {
+    "project_number": "677828531793",
+    "project_id": "coinpro-424719",
+    "storage_bucket": "coinpro-424719.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:677828531793:android:4847a1019a1f7a06fc0a70",
+        "android_client_info": {
+          "package_name": "com.example.coinpro_prokit"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "677828531793-okdlb0fo3kjl5lgd1s4s9dgdgflcuoci.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.coinpro_prokit",
+            "certificate_hash": "91dea1a64b72c3ebecd96a82ef6b82827a6f2406"
+          }
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBFpp9sLGc8uMWMGR5omn04pRCOUX5qLQs"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

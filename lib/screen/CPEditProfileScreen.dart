@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:nb_utils/nb_utils.dart';
 import 'package:coinpro_prokit/utils/CPColors.dart';
 import 'package:coinpro_prokit/main.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 class CPEditProfileScreen extends StatefulWidget {
   @override
@@ -9,9 +10,9 @@ class CPEditProfileScreen extends StatefulWidget {
 }
 
 class CPEditProfileScreenState extends State<CPEditProfileScreen> {
-  TextEditingController fullNameController = TextEditingController(text: "Jelly Grande");
-  TextEditingController contactNumberController = TextEditingController(text: "9845612337");
-  TextEditingController emailController = TextEditingController(text: "Jelly123@gmail.com");
+  TextEditingController fullNameController = TextEditingController();
+  TextEditingController contactNumberController = TextEditingController();
+  TextEditingController emailController = TextEditingController();
 
   FocusNode fullNameFocusNode = FocusNode();
   FocusNode contactNumberFocusNode = FocusNode();
@@ -26,7 +27,54 @@ class CPEditProfileScreenState extends State<CPEditProfileScreen> {
   }
 
   Future<void> init() async {
-    //
+    await fetchUserProfile();
+  }
+
+  Future<void> fetchUserProfile() async {
+    final user = Supabase.instance.client.auth.currentUser;
+    if (user != null && user.email != null) {
+      final response = await Supabase.instance.client
+          .from('profileusers')
+          .select()
+          .eq('email', user.email!)
+          .single();
+
+      if (response != null) {
+        setState(() {
+          fullNameController.text = response['username'] ?? '';
+          contactNumberController.text = response['contactnumber'] ?? '';
+          emailController.text = user.email ?? '';
+        });
+      } else {
+        toast('Profile data not found.');
+      }
+    } else {
+      toast('User not logged in');
+    }
+  }
+
+  Future<void> updateUserProfile() async {
+    final user = Supabase.instance.client.auth.currentUser;
+    if (user != null && user.email != null) {
+      final updates = {
+        'username': fullNameController.text,
+        'contactnumber': contactNumberController.text,
+        'updated_at': DateTime.now().toIso8601String(),
+      };
+
+      final response = await Supabase.instance.client
+          .from('profileusers')
+          .update(updates)
+          .eq('email', user.email!);
+
+      if (response == null) {
+        toast('Profile updated successfully');
+      } else {
+        toast('Error updating profile.');
+      }
+    } else {
+      toast('User not logged in');
+    }
   }
 
   @override
@@ -126,9 +174,7 @@ class CPEditProfileScreenState extends State<CPEditProfileScreen> {
                             obscureText: false,
                             textAlign: TextAlign.left,
                             maxLines: 1,
-                            onSubmitted: (value) {
-                              FocusScope.of(context).requestFocus(contactNumberFocusNode);
-                            },
+                            readOnly: true, // Email read-only
                             focusNode: emailFocus,
                             style: primaryTextStyle(),
                             decoration: InputDecoration(
@@ -202,10 +248,9 @@ class CPEditProfileScreenState extends State<CPEditProfileScreen> {
                     Padding(
                       padding: EdgeInsets.only(left: 16, right: 16, bottom: 24),
                       child: MaterialButton(
-                        onPressed: () {
-                          name = fullNameController.text;
-                          toast("Update Profile Successfully");
-                          finish(context, name);
+                        onPressed: () async {
+                          await updateUserProfile();
+                          finish(context);
                         },
                         color: Color(0xff2972ff),
                         elevation: 0,

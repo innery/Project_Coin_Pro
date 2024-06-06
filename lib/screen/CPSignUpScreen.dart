@@ -1,9 +1,12 @@
+import 'dart:convert';
+import 'package:crypto/crypto.dart';
 import 'package:coinpro_prokit/utils/CPWidgets.dart';
 import 'package:flutter/material.dart';
 import 'package:nb_utils/nb_utils.dart';
 import 'package:coinpro_prokit/screen/CPLoginScreen.dart';
 import 'package:coinpro_prokit/utils/CPColors.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'dart:math';
 
 class CPSignUpScreen extends StatefulWidget {
   @override
@@ -34,25 +37,62 @@ class CPSignUpScreenState extends State<CPSignUpScreen> {
     if (mounted) super.setState(fn);
   }
 
-  Future<void> signUp() async {
-    final response = await Supabase.instance.client.auth.signUp(
-      emailController.text,
-      passController.text,
-    );
-
-    if (response.error != null) {
-      // Hata mesajını göster
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(response.error!.message)),
-      );
-    } else {
-      // Başarılı kayıt sonrası kullanıcıya bilgi ver ve giriş ekranına yönlendir
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Kayıt başarılı! Giriş yapabilirsiniz.')),
-      );
-      Navigator.push(context, MaterialPageRoute(builder: (context) => CPLoginScreen()));
-    }
+  String hashPassword(String password) {
+    final bytes = utf8.encode(password); // Convert the password to a list of bytes
+    final digest = sha256.convert(bytes); // Compute the SHA-256 hash
+    return digest.toString(); // Convert the hash to a string
   }
+
+   String generateRandomNumber(int length) {
+    final random = Random();
+    String number = '';
+    for (int i = 0; i < length; i++) {
+      number += random.nextInt(10).toString();
+    }
+    return number;
+  }
+
+  Future<void> signUp(BuildContext context) async {
+    final email = emailController.text;
+    final password = passController.text;
+    final hashedPassword = hashPassword(password);
+    final userName = userNameController.text;
+    final contactNumber = generateRandomNumber(10);
+
+    
+
+
+      final response = await Supabase.instance.client.auth.signUp(
+        email: email,
+        password: password, // Supabase'e orijinal şifreyi gönderiyoruz, çünkü Supabase kendi şifreleme yöntemini kullanır.
+        data: {'displayName': userName},
+      );
+      final error = response;
+      if (error == null) {
+        return;
+      }
+      else {
+      }
+
+      final insertResponse = await Supabase.instance.client.from('profileusers').insert({
+              // Supabase tarafından oluşturulan kullanıcı ID'si
+              'username': userNameController.text,
+              'email': emailController.text,
+              'password': hashedPassword,
+              'contactnumber': contactNumber, // Hashlenmiş şifreyi kaydediyoruz
+            }); 
+
+        if (insertResponse != null) {
+          
+        } else {
+          setState(() {
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (context) => CPLoginScreen()));
+          });
+        } 
+  }
+  
 
   @override
   Widget build(BuildContext context) {
@@ -246,7 +286,9 @@ class CPSignUpScreenState extends State<CPSignUpScreen> {
                   ),
                   SizedBox(height: 32),
                   MaterialButton(
-                    onPressed: signUp,
+                    onPressed: () {
+                      signUp(context);
+                    },
                     color: Color(0xff2972ff),
                     elevation: 0,
                     shape: RoundedRectangleBorder(

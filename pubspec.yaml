@@ -8,8 +8,8 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
-  supabase: ^0.2.9
-  supabase_flutter: ^0.2.9
+  supabase_flutter: ^2.5.3
+  crypto: ^3.0.1
 
   # Base
   cupertino_icons: ^1.0.6
@@ -31,6 +31,7 @@ dependencies:
   url_launcher: ^6.1.14
   smooth_page_indicator: ^1.1.0
   scan: 1.6.0
+  google_sign_in: ^6.2.1
 
 dependency_overrides:
   intl: ^0.18.1

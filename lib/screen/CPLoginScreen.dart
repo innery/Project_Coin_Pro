@@ -1,10 +1,10 @@
-import 'package:coinpro_prokit/utils/CPWidgets.dart';
 import 'package:flutter/material.dart';
 import 'package:nb_utils/nb_utils.dart';
 import 'package:coinpro_prokit/screen/CPDashBoardScreen.dart';
 import 'package:coinpro_prokit/screen/CPSignUpScreen.dart';
 import 'package:coinpro_prokit/utils/CPColors.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:google_sign_in/google_sign_in.dart';
 
 class CPLoginScreen extends StatefulWidget {
   @override
@@ -36,15 +36,15 @@ class CPLoginScreenState extends State<CPLoginScreen> {
   }
 
   Future<void> signIn() async {
-    final response = await Supabase.instance.client.auth.signIn(
+    final response = await Supabase.instance.client.auth.signInWithPassword(
       email: emailController.text,
       password: passController.text,
     );
 
-    if (response.error != null) {
-      // Hata mesajını göster
+     if (response.session == null) {
+      // Oturum açma başarısızsa hata mesajını göster
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(response.error!.message)),
+        SnackBar(content: Text('Giriş başarısız. Lütfen bilgilerinizi kontrol edin ve tekrar deneyin.')),
       );
     } else {
       // Başarılı giriş sonrası kullanıcıyı ana sayfaya yönlendir
@@ -54,6 +54,36 @@ class CPLoginScreenState extends State<CPLoginScreen> {
       CPDashBoardScreen().launch(context);
     }
   }
+
+ 
+Future<AuthResponse> _googleSignIn() async {
+
+    const clientId = "677828531793-hsnskqr8hbipveakjjc87j4klhk792t5.apps.googleusercontent.com";
+
+    final GoogleSignIn googleSignIn = GoogleSignIn(
+      clientId: clientId,
+  );
+  final googleUser = await googleSignIn.signIn();
+  final googleAuth = await googleUser!.authentication;
+  final accessToken = googleAuth.accessToken;
+  final idToken = googleAuth.idToken;
+
+  if (accessToken == null) {
+    throw 'No Access Token found.';
+  }
+  if (idToken == null) {
+    throw 'No ID Token found.';
+  }
+
+  final response = await Supabase.instance.client.auth.signInWithIdToken(
+    provider: OAuthProvider.google,
+    idToken: idToken!,
+    accessToken: accessToken!,
+  );
+
+  return response;
+}
+
 
   @override
   Widget build(BuildContext context) {
@@ -120,9 +150,9 @@ class CPLoginScreenState extends State<CPLoginScreen> {
                   SizedBox(height: 16),
                   Row(
                     children: [
-                      Container(width: 60, height: 3, decoration: boxDecorations(radius: 8, bgColor: CPPrimaryColor, showShadow: false)),
+                      Container(width: 60, height: 3, decoration: BoxDecoration(borderRadius: BorderRadius.circular(8), color: CPPrimaryColor, boxShadow: defaultBoxShadow())),
                       SizedBox(width: 8),
-                      Container(width: 10, height: 3, decoration: boxDecorations(radius: 8, bgColor: CPPrimaryColor, showShadow: false)),
+                      Container(width: 10, height: 3, decoration: BoxDecoration(borderRadius: BorderRadius.circular(8), color: CPPrimaryColor, boxShadow: defaultBoxShadow())),
                     ],
                   ),
                   SizedBox(height: 24),
@@ -141,18 +171,6 @@ class CPLoginScreenState extends State<CPLoginScreen> {
                       fontSize: 14,
                     ),
                     decoration: InputDecoration(
-                      disabledBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(16.0),
-                        borderSide: BorderSide(color: Colors.transparent, width: 0),
-                      ),
-                      focusedBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(16.0),
-                        borderSide: BorderSide(color: Colors.transparent, width: 0),
-                      ),
-                      enabledBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(16.0),
-                        borderSide: BorderSide(color: Colors.transparent, width: 0),
-                      ),
                       hintText: "Email",
                       hintStyle: TextStyle(
                         fontWeight: FontWeight.w400,
@@ -163,6 +181,8 @@ class CPLoginScreenState extends State<CPLoginScreen> {
                       filled: true,
                       isDense: false,
                       contentPadding: EdgeInsets.fromLTRB(16, 8, 12, 8),
+                      focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide(color: Colors.transparent, width: 0)),
+                      enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide(color: Colors.transparent, width: 0)),
                     ),
                   ),
                   SizedBox(height: 24),
@@ -178,18 +198,6 @@ class CPLoginScreenState extends State<CPLoginScreen> {
                       fontSize: 14,
                     ),
                     decoration: InputDecoration(
-                      disabledBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(16.0),
-                        borderSide: BorderSide(color: Colors.transparent, width: 1),
-                      ),
-                      focusedBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(16.0),
-                        borderSide: BorderSide(color: Colors.transparent, width: 1),
-                      ),
-                      enabledBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(16.0),
-                        borderSide: BorderSide(color: Colors.transparent, width: 1),
-                      ),
                       hintText: "Password",
                       hintStyle: TextStyle(
                         fontWeight: FontWeight.w400,
@@ -200,6 +208,8 @@ class CPLoginScreenState extends State<CPLoginScreen> {
                       filled: true,
                       isDense: false,
                       contentPadding: EdgeInsets.fromLTRB(16, 8, 16, 8),
+                      focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide(color: Colors.transparent, width: 1)),
+                      enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide(color: Colors.transparent, width: 1)),
                       suffixIcon: Icon(Icons.remove_red_eye_outlined, color: Color(0xffa7a7a7), size: 22),
                     ),
                   ),
@@ -221,7 +231,7 @@ class CPLoginScreenState extends State<CPLoginScreen> {
                     onPressed: signIn, // Giriş işlemi için signIn fonksiyonunu çağır
                     color: Color(0xff2972ff),
                     elevation: 0,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16.0)),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                     padding: EdgeInsets.symmetric(horizontal: 16, vertical: 16),
                     child: Text(
                       "Login",
@@ -247,20 +257,37 @@ class CPLoginScreenState extends State<CPLoginScreen> {
                   ),
                   SizedBox(height: 24),
                   MaterialButton(
-                    onPressed: () {
-                      CPDashBoardScreen().launch(context);
-                    },
-                    color: context.cardColor,
-                    elevation: 0,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                    padding: EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-                    child: Text(
-                      "Login with Google",
-                      style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800, fontStyle: FontStyle.normal),
-                    ),
-                    height: 40,
-                    minWidth: MediaQuery.of(context).size.width,
-                  ),
+  onPressed: () {
+    _googleSignIn().then((response) {
+      if (response.session != null) {
+        // Başarılı giriş sonrası kullanıcıyı ana sayfaya yönlendir
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Giriş başarılı!')),
+        );
+        CPDashBoardScreen().launch(context);
+      } else {
+        // Giriş başarısızsa hata mesajını göster
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Google ile giriş başarısız. Lütfen tekrar deneyin.')),
+        );
+      }
+    }).catchError((error) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Bir hata oluştu: $error')),
+      );
+    });
+  },
+  color: context.cardColor,
+  elevation: 0,
+  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+  padding: EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+  child: Text(
+    "Login with Google",
+    style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800, fontStyle: FontStyle.normal),
+  ),
+  height: 40,
+  minWidth: MediaQuery.of(context).size.width,
+),             
                 ],
               ),
             ),

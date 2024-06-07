@@ -34,16 +34,16 @@ class CPEditProfileScreenState extends State<CPEditProfileScreen> {
     final user = Supabase.instance.client.auth.currentUser;
     if (user != null && user.email != null) {
       final response = await Supabase.instance.client
-          .from('profileusers')
+          .from('<Sezen>Profile')
           .select()
-          .eq('email', user.email!)
+          .eq('name', 'Mehmet')
           .single();
 
       if (response != null) {
         setState(() {
-          fullNameController.text = response['username'] ?? '';
-          contactNumberController.text = response['contactnumber'] ?? '';
-          emailController.text = user.email ?? '';
+          fullNameController.text = response['name'] ?? '';
+          contactNumberController.text = response['city'] ?? '';
+          emailController.text = response['adress'] ?? '';
         });
       } else {
         toast('Profile data not found.');
